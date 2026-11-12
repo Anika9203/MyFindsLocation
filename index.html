@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Namma Pins – my map of places worth going to</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📍</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Bricolage+Grotesque:wght@600;700&family=Space+Grotesk:wght@500;700&family=Fraunces:wght@600;700&family=DM+Serif+Display&family=Libre+Baskerville:wght@700&family=Lora:wght@600;700&family=Sora:wght@600;700&family=Outfit:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--ink:#2f3b2a;--muted:#6f7d66;--cream:#f2f6ea;--paper:#fbfdf5;--line:#d8e3c6;--sun:#4f8a5b;--rose:#e9a65a;--plum:var(--ink);--h1c:#2f5d50;--h2c:#8fb98b;--pat:none;--r:18px;--hf:"Fraunces",Georgia,serif;--serif:var(--hf);--sans:"DM Sans","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:var(--sans);color:var(--ink);background:var(--cream);display:grid;grid-template-columns:400px 1fr;overflow:hidden}
+aside{display:flex;flex-direction:column;min-height:0;background:var(--cream);border-right:1px solid var(--line);position:relative;z-index:500}
+header{position:relative;padding:22px 24px 24px;color:#fff;overflow:hidden;background:var(--pat),linear-gradient(160deg,var(--h1c),var(--h2c))}
+header .mot{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:76px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.25))}
+h1{margin:0;font:700 30px/1.1 var(--hf);position:relative;max-width:74%}
+h1 small{display:block;font:500 13px/1.35 var(--sans);margin-top:6px;opacity:.93}
+.vibe{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
+.vibe h2{margin:0;font:700 21px var(--hf);color:var(--sun)}
+.vibe .tag{margin:2px 0 8px;font-size:13px;color:var(--muted)}
+.vibe .blurb{margin:0 0 10px;font-size:14px;line-height:1.55}
+.tags span{display:inline-block;font-size:12px;padding:3px 10px;margin:0 5px 5px 0;border-radius:999px;border:1px solid var(--sun);color:var(--sun)}
+.zone{transform:translate(-50%,-50%);white-space:nowrap;display:inline-block;font-weight:700;font-size:13px;padding:3px 10px;border-radius:999px;background:var(--paper);color:var(--za);border:1.5px solid var(--za);box-shadow:0 3px 10px rgba(0,0,0,.18);cursor:pointer}
+body,aside,details,.place,.vibe{transition:background .8s,border-color .8s,color .8s}
+.leaflet-control-layers{border-radius:14px!important;font-family:var(--sans)}
+.scroll{flex:1;overflow:auto;padding:16px 18px 28px}
+details{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:4px 16px;margin-bottom:16px}
+summary{font:700 17px var(--serif);padding:12px 0;cursor:pointer;list-style:none;color:var(--plum)}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"＋";float:right;color:var(--sun)}
+details[open] summary::after{content:"－"}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px}
+input[type=text],textarea,select{width:100%;font:inherit;font-size:14px;color:var(--ink);background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+textarea{resize:vertical;min-height:64px}
+input:focus,textarea:focus,select:focus,button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1}
+button{font:inherit;font-size:14px;cursor:pointer;border:0;border-radius:999px;padding:10px 16px;background:var(--line);color:var(--ink);transition:transform .15s,background .2s}
+button:hover{transform:translateY(-1px)}
+button.go{background:linear-gradient(135deg,var(--sun),var(--rose));color:#fff;font-weight:700}
+button.ghost{background:transparent;border:1px dashed var(--rose);color:var(--plum)}
+.hint{font-size:12.5px;color:var(--muted);line-height:1.5;margin:8px 0 4px}
+.results button{display:block;width:100%;text-align:left;border-radius:12px;background:var(--cream);border:1px solid var(--line);margin-top:6px;font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 14px}
+.chip{border-radius:999px;padding:6px 12px;font-size:13px;background:var(--paper);border:1px solid var(--line)}
+.chip.on{background:var(--c,var(--sun));border-color:transparent;color:#fff}
+.place{display:flex;gap:12px;padding:12px;border-radius:16px;background:var(--paper);border:1px solid var(--line);margin-bottom:10px;cursor:pointer}
+.place:hover{border-color:var(--rose)}
+.place .ic{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:20px;background:var(--c)}
+.place h3{margin:0;font:700 15px var(--serif)}
+.place p{margin:3px 0 0;font-size:13px;color:var(--muted);line-height:1.4}
+.place.done{opacity:.6}
+.place .acts{display:flex;gap:4px;margin-top:6px}
+.place .acts button{padding:3px 10px;font-size:12px}
+.empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:14px;line-height:1.6}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tools button{font-size:13px;padding:8px 14px}
+#wrap{position:relative;min-height:0}
+#map{position:absolute;inset:0;background:#f3e3d0}
+#toast{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:900;background:var(--ink);color:var(--cream);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .3s}
+#toast.show{opacity:1}
+#pinmode{position:absolute;top:14px;left:14px;z-index:900;box-shadow:0 6px 20px rgba(58,47,69,.25);background:var(--paper)}
+#pinmode.on{background:var(--sun);color:#fff}
+.pin{width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--c);display:grid;place-items:center;
+  border:2px solid #fff8ee;box-shadow:0 6px 14px rgba(58,47,69,.35),0 0 18px 2px color-mix(in srgb,var(--c) 60%,transparent);transition:transform .2s}
+.pin span{transform:rotate(45deg);font-size:17px}
+.pin:hover{transform:rotate(-45deg) scale(1.15)}
+.pin.done{filter:grayscale(.55) brightness(1.05)}
+.draft{width:22px;height:22px;border-radius:50%;background:var(--sun);border:3px solid #fff;box-shadow:0 0 0 0 rgba(240,138,93,.7);animation:pulse 1.8s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 18px rgba(240,138,93,0)}100%{box-shadow:0 0 0 0 rgba(240,138,93,0)}}
+.leaflet-popup-content-wrapper{border-radius:16px;background:var(--paper);color:var(--ink);font-family:var(--sans)}
+.leaflet-popup-tip{background:var(--paper)}
+.pop h4{margin:0 0 4px;font:700 16px var(--serif)}
+.pop p{margin:0 0 8px;font-size:13px;line-height:1.45}
+.pop a{color:var(--sun);font-size:13px;margin-right:10px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:820px){
+  body{grid-template-columns:1fr;grid-template-rows:1fr 54vh}
+  #wrap{order:-1} aside{border-right:0;border-top:1px solid var(--line)}
+  header{padding:14px 20px 18px} h1{font-size:24px} header .mot{font-size:52px}
+}
+</style>
+</head>
+<body>
+<aside>
+  <header><div class="mot" id="mot">🌳</div><h1 id="title">Namma Pins<small id="sub">my map of places worth going to</small></h1></header>
+  <div class="scroll">
+    <div class="vibe"><h2 id="vn"></h2><p class="tag" id="vt"></p><p class="blurb" id="vb"></p><div class="tags" id="vg"></div></div>
+    <div class="chips" id="areas"></div>
+    <p class="hint" style="margin:0 0 6px">Map look</p>
+    <div class="chips" id="looks"></div>
+    <details id="add" open>
+      <summary>Add a place</summary>
+      <label for="paste">Paste a reel caption, a reel link, or a Google Maps link</label>
+      <textarea id="paste" placeholder="e.g. 📍 Third Wave Coffee, Indiranagar&#10;https://www.instagram.com/reel/…"></textarea>
+      <div class="row" style="margin-top:8px"><button class="go" id="find">Find the spot</button><button class="ghost" id="clear">Clear</button></div>
+      <p class="hint">Instagram doesn’t let websites read your saved reels, so copy the caption (the 📍 line is gold) and paste it here. I’ll search for the place.</p>
+      <label for="q">Or search by name</label>
+      <div class="row"><input type="text" id="q" placeholder="Lalbagh, Vidyarthi Bhavan…"><button id="search" style="flex:none">Search</button></div>
+      <div class="hint"><label style="display:inline;margin:0"><input type="checkbox" id="everywhere"> search beyond Bengaluru</label></div>
+      <div class="results" id="results"></div>
+      <label for="name">Name</label>
+      <input type="text" id="name" placeholder="What shall we call it?">
+      <label for="cat">Kind of place</label>
+      <select id="cat"></select>
+      <label for="note">A note to future me</label>
+      <textarea id="note" placeholder="Go at sunset, order the filter coffee…"></textarea>
+      <label for="src">Reel or source link (optional)</label>
+      <input type="text" id="src" placeholder="https://www.instagram.com/reel/…">
+      <p class="hint" id="coords">No spot chosen yet. Search, or use “Drop a pin” on the map.</p>
+      <button class="go" id="save" style="width:100%;margin-bottom:12px">Pin it to the map</button>
+    </details>
+
+    <div class="chips" id="chips"></div>
+    <div id="list"></div>
+
+    <details>
+      <summary>Keep or move your map</summary>
+      <p class="hint">Places live in this browser. Export a backup file to keep them safe or move them to your phone.</p>
+      <div class="tools"><button id="export">Export backup</button><button id="importBtn">Import backup</button>
+        <input type="file" id="importFile" accept="application/json" hidden></div>
+      <label for="gkey">Google Maps API key (optional)</label>
+      <input type="text" id="gkey" placeholder="AIza…">
+      <div class="tools" style="margin-top:8px"><button id="gsave">Use Google Maps</button><button id="gclear">Back to free map</button></div>
+      <p class="hint">Stored only in this browser. In Google Cloud, restrict the key to your site address and set a daily map-load quota so it can’t run up a bill.</p>
+    </details>
+  </div>
+</aside>
+
+<div id="wrap">
+  <div id="map"></div>
+  <button id="pinmode">📍 Drop a pin</button>
+  <div id="toast"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const KEY="namma-pins.places.v1";
+const CATS={
+  cafe:{e:"☕",c:"#c98b5e",n:"Cafés"}, food:{e:"🍜",c:"#d9735f",n:"Food"},
+  nature:{e:"🌿",c:"#7a9a6d",n:"Outings & green"}, art:{e:"🏮",c:"#a8688a",n:"Art & culture"},
+  shop:{e:"🧺",c:"#d6a24f",n:"Shops"}, night:{e:"🌙",c:"#6c6aa8",n:"Evenings"},
+  other:{e:"🌸",c:"#c4818e",n:"Other"}
+};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let places=[], draft=null, draftMarker=null, filter="all", pinMode=false, markers={};
+
+const SEED=[
+  {id:"s1",name:"Lalbagh Botanical Garden",cat:"nature",lat:12.9507,lng:77.5848,note:"Sample pin. Glass house at golden hour.",src:"",done:false},
+  {id:"s2",name:"Cubbon Park",cat:"nature",lat:12.9763,lng:77.5929,note:"Sample pin. Slow morning walk.",src:"",done:false},
+  {id:"s3",name:"Bangalore Palace",cat:"art",lat:12.9988,lng:77.5921,note:"Sample pin. Delete me when you like.",src:"",done:false}
+];
+function load(){try{const r=JSON.parse(localStorage.getItem(KEY));places=Array.isArray(r)?r:SEED.slice()}catch(e){places=SEED.slice()}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(places))}catch(e){toast("Couldn’t save in this browser. Export a backup.")}}
+function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),2600)}
+
+/* map */
+const map=L.map("map",{zoomControl:false}).setView([12.9716,77.5946],12);
+L.control.zoom({position:"bottomright"}).addTo(map);
+const voy=L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors © CARTO"}).addTo(map);
+const osm=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"});
+const ctl=L.control.layers({"Soft streets":voy,"Classic map":osm},null,{position:"topright"}).addTo(map);
+
+/* optional: real Google Maps under the same pins and zones */
+const DEFAULT_KEY="AIzaSyCBi0vitdKwQ63JLFs_VRsMH74XtYASphA";
+const GKEY=(()=>{try{const v=localStorage.getItem("namma-pins.gkey");return v==="off"?"":(v||DEFAULT_KEY)}catch(e){return DEFAULT_KEY}})();
+$("gkey").value=GKEY;
+$("gsave").onclick=()=>{const v=$("gkey").value.trim();if(!v){toast("Paste your key first.");return}try{localStorage.setItem("namma-pins.gkey",v)}catch(e){}location.reload()};
+$("gclear").onclick=()=>{try{localStorage.setItem("namma-pins.gkey","off")}catch(e){}location.reload()};
+const PAL={
+ sunset:{land:"#f8e6d4",build:"#f1d3bd",road:"#fff4e8",road2:"#ffe2c4",hwy:"#f6b98f",water:"#b9d3d6",park:"#cfe0b5",label:"#7a4a4a",line:"#e3b9a0"},
+ matcha:{land:"#e9f0dc",build:"#dfe8cf",road:"#fbfdf3",road2:"#f1f6e0",hwy:"#c5dba0",water:"#a9d3c8",park:"#bfdc9b",label:"#3f5a3a",line:"#b9cfa0"},
+ midnight:{land:"#241d33",build:"#2e2540",road:"#3d3354",road2:"#4a3f66",hwy:"#ff7a66",water:"#172b3a",park:"#28403a",label:"#d9c8f0",line:"#4a3f66"},
+ blush:{land:"#fbeaf0",build:"#f6d9e4",road:"#fffafc",road2:"#fde6ee",hwy:"#f3b6cb",water:"#c9d7f0",park:"#dcebd0",label:"#7a4e66",line:"#e8bdd0"}};
+const LOOKS={classic:{n:"Classic",f:""},
+ sunset:{n:"Soft sunset",f:"sepia(.45) saturate(1.1) hue-rotate(-12deg) brightness(1.03)"},
+ matcha:{n:"Matcha",f:"sepia(.3) hue-rotate(40deg) saturate(.9)"},
+ midnight:{n:"Midnight",f:"invert(.92) hue-rotate(200deg) saturate(.8) brightness(.95)"},
+ blush:{n:"Blush",f:"sepia(.25) hue-rotate(-35deg) saturate(1.2) brightness(1.06)"}};
+let look="sunset";try{look=localStorage.getItem("namma-pins.look")||"sunset"}catch(e){}
+if(!LOOKS[look])look="sunset";
+const gstyles=p=>!p?undefined:[
+ {elementType:"geometry",stylers:[{color:p.land}]},
+ {elementType:"labels.text.fill",stylers:[{color:p.label}]},
+ {elementType:"labels.text.stroke",stylers:[{color:p.land}]},
+ {elementType:"labels.icon",stylers:[{visibility:"off"}]},
+ {featureType:"poi.business",stylers:[{visibility:"off"}]},
+ {featureType:"administrative",elementType:"geometry.stroke",stylers:[{color:p.line}]},
+ {featureType:"landscape.man_made",elementType:"geometry",stylers:[{color:p.build}]},
+ {featureType:"poi.park",elementType:"geometry",stylers:[{color:p.park}]},
+ {featureType:"road",elementType:"geometry",stylers:[{color:p.road}]},
+ {featureType:"road.arterial",elementType:"geometry",stylers:[{color:p.road2}]},
+ {featureType:"road.highway",elementType:"geometry",stylers:[{color:p.hwy}]},
+ {featureType:"water",elementType:"geometry",stylers:[{color:p.water}]}];
+let gl=null,gBad=false,gReady=false;
+function applyFilter(){map.getPane("tilePane").style.filter=gl?"":LOOKS[look].f}
+function makeG(){
+  if(gl){ctl.removeLayer(gl);gl.remove()}
+  gl=L.gridLayer.googleMutant({type:"roadmap",maxZoom:20,styles:gstyles(PAL[look])});
+  ctl.addBaseLayer(gl,"Google Maps");voy.remove();gl.addTo(map);applyFilter();
+}
+function drawLooks(){$("looks").innerHTML=Object.entries(LOOKS).map(([k,v])=>`<button class="chip ${k===look?"on":""}" data-l="${k}">${v.n}</button>`).join("")}
+$("looks").onclick=e=>{const b=e.target.closest("[data-l]");if(!b)return;look=b.dataset.l;
+  try{localStorage.setItem("namma-pins.look",look)}catch(err){}
+  if(gReady&&!gBad)makeG();else applyFilter();drawLooks()};
+drawLooks();applyFilter();
+window.gm_authFailure=()=>{gBad=true;if(gl){gl.remove();gl=null}if(!map.hasLayer(voy))voy.addTo(map);applyFilter();toast("Google didn’t accept the key here, so I switched to the free map.")};
+if(GKEY){
+  window.__gm=()=>{const t=document.createElement("script");
+    t.src="https://cdn.jsdelivr.net/npm/leaflet.gridlayer.googlemutant@0.14.1/dist/Leaflet.GoogleMutant.js";
+    t.onload=()=>{if(gBad)return;gReady=true;makeG()};
+    t.onerror=()=>toast("Couldn’t load the Google layer. Using the free map.");document.head.appendChild(t)};
+  const g=document.createElement("script");g.async=true;
+  g.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(GKEY)+"&callback=__gm";
+  g.onerror=()=>toast("Couldn’t reach Google Maps. Using the free map.");document.head.appendChild(g);
+}
+
+/* neighbourhood vibes: k = [bg, paper, line, ink, muted, accent, accent2, header1, header2] */
+const PAT={
+  dots:"radial-gradient(rgba(255,255,255,.3) 1.5px,transparent 2px) 0 0/14px 14px",
+  stripes:"repeating-linear-gradient(135deg,rgba(255,255,255,.12) 0 8px,transparent 8px 18px)",
+  grid:"linear-gradient(rgba(255,255,255,.16) 1px,transparent 1px) 0 0/18px 18px,linear-gradient(90deg,rgba(255,255,255,.16) 1px,transparent 1px) 0 0/18px 18px",
+  rings:"repeating-radial-gradient(circle at 85% 110%,rgba(255,255,255,.2) 0 2px,transparent 2px 16px)",
+  lines:"repeating-linear-gradient(0deg,rgba(255,255,255,.14) 0 1px,transparent 1px 12px)"};
+const DEF={id:"all",n:"Bengaluru",mot:"🌳",font:"Fraunces",rad:18,pat:"none",
+  k:["#f2f6ea","#fbfdf5","#d8e3c6","#2f3b2a","#6f7d66","#4f8a5b","#e9a65a","#2f5d50","#8fb98b"],
+  tag:"The Garden City",vibe:"Pan or zoom into a neighbourhood and the whole page takes on its mood. Tap a neighbourhood below to jump there.",tags:["your places","your pace"]};
+const AREAS=[
+ {id:"mall",n:"Malleshwaram",mot:"🌼",lat:13.0035,lng:77.571,r:1400,font:"Young Serif",rad:6,pat:"dots",
+  k:["#fbf2d9","#fffaea","#ecd9a6","#3b2418","#85684f","#b8412b","#e0a11b","#8c2f1b","#e8a21a"],
+  tag:"Old Bangalore, unhurried",vibe:"Tree-lined lanes, temples and flower sellers. Filter coffee, tiffin institutions and a busy market, at a pace that still feels pre-IT boom.",tags:["temples","filter coffee","flower market","Sankey Tank"]},
+ {id:"indi",n:"Indiranagar",mot:"🍻",lat:12.9784,lng:77.6408,r:1400,font:"Bricolage Grotesque",rad:24,pat:"stripes",
+  k:["#221a2e","#2e2440","#463a5e","#f6ebff","#b9a6d1","#ff6f61","#6fe0c1","#3a1f52","#d1456d"],
+  tag:"Late lunches, later nights",vibe:"Lively and premium: restaurants, cafés and retail streets along 100 Feet Road, with the metro close by and always something new to try.",tags:["cafés","pubs","100 Feet Road","brunch"]},
+ {id:"kora",n:"Koramangala",mot:"💻",lat:12.9352,lng:77.6245,r:1500,font:"Space Grotesk",rad:14,pat:"grid",
+  k:["#edf5ff","#fafdff","#c9defa","#14233f","#5d7090","#2f6bff","#b8e02a","#1b3fa8","#3ea0ff"],
+  tag:"Startups, coffee and Sunday brunch",vibe:"Young, busy and cosmopolitan. Laptop cafés, pubs with live music, and a few green pockets to escape to.",tags:["cafés","startup crowd","live music","parks"]},
+ {id:"jaya",n:"Jayanagar",mot:"🌳",lat:12.925,lng:77.583,r:1500,font:"Fraunces",rad:20,pat:"dots",
+  k:["#f1f6e3","#fbfdf2","#d3e0b4","#26351f","#68795a","#5a8a3a","#e8a33d","#3f6b2c","#a7c96a"],
+  tag:"Shaded blocks, old Bangalore calm",vibe:"Calm, leafy and family-friendly, with parks, schools and a classic Bangalore feel under big trees.",tags:["parks","old Bangalore","dosa spots","4th Block"]},
+ {id:"basa",n:"Basavanagudi",mot:"🛕",lat:12.943,lng:77.573,r:1100,font:"DM Serif Display",rad:10,pat:"rings",
+  k:["#f6e9dc","#fff7ee","#e5ccb2","#3a2316","#8a6a52","#a0522d","#c9a227","#6e3a1d","#d39a4a"],
+  tag:"Temple bells and Gandhi Bazaar",vibe:"Historic south Bengaluru: temples, old shops, snack streets and a community that has stayed put for generations.",tags:["Bull Temple","Gandhi Bazaar","heritage","snacks"]},
+ {id:"mg",n:"MG Road & Church Street",mot:"📚",lat:12.9753,lng:77.607,r:900,font:"Libre Baskerville",rad:8,pat:"lines",
+  k:["#f7ede4","#fffaf4","#e6d0bd","#2e1a1c","#85666a","#8c2f39","#c8963e","#5c1f2b","#b5543c"],
+  tag:"Colonial bones, cosmopolitan nights",vibe:"The old cantonment heart of the city: brick-red streets, bookshops, pubs and a crowd from everywhere.",tags:["Church Street","bookshops","pubs","Cubbon Park nearby"]},
+ {id:"fraz",n:"Frazer Town",mot:"🏡",lat:13,lng:77.613,r:1000,font:"Lora",rad:16,pat:"lines",
+  k:["#e8f4f1","#f8fdfc","#c2e0da","#12302d","#58807b","#1f7a72","#d9772b","#14504b","#4fb3a7"],
+  tag:"Colonial bungalows, busy food lanes",vibe:"Old-world and cosmopolitan, with colonial-era bungalows, churches and mosques side by side, and a lively food scene.",tags:["bungalows","food lanes","heritage","churches"]},
+ {id:"white",n:"Whitefield",mot:"🏙️",lat:12.9698,lng:77.75,r:2600,font:"Sora",rad:4,pat:"grid",
+  k:["#edf1f6","#fafcfe","#cdd7e4","#1c2736","#64748b","#34507a","#3fb0d8","#1f3354","#4a86b8"],
+  tag:"Glass towers and gated greens",vibe:"Tech parks, malls and big gated townships: a self-contained suburb on the eastern edge of the city.",tags:["tech parks","malls","townships","cafés"]},
+ {id:"hsr",n:"HSR Layout",mot:"🌇",lat:12.9116,lng:77.6389,r:1500,font:"Outfit",rad:18,pat:"grid",
+  k:["#fff5e3","#fffbf2","#f4dcb0","#3a2410","#8a6c4a","#e8742a","#2a9d8f","#c2561a","#f2ae4a"],
+  tag:"Startup suburb with a lake",vibe:"Planned sectors, young professionals and cafés, with Agara Lake and parks for slowing down.",tags:["sectors","Agara Lake","cafés","startups"]}
+];
+map.createPane("zones").style.zIndex=450;
+AREAS.forEach(a=>{
+  L.circle([a.lat,a.lng],{radius:a.r,color:a.k[5],weight:2,dashArray:"6 8",fillColor:a.k[5],fillOpacity:.16,interactive:false}).addTo(map);
+  L.marker([a.lat,a.lng],{pane:"zones",icon:L.divIcon({className:"",html:`<div class="zone" style="--za:${a.k[5]};font-family:'${a.font}',serif">${a.n}</div>`,iconSize:[0,0]})}).addTo(map).on("click",()=>goArea(a));
+});
+let cur="";
+function setTheme(a){
+  if(cur===a.id)return;cur=a.id;
+  const r=document.documentElement.style,k=a.k;
+  [["--cream",0],["--paper",1],["--line",2],["--ink",3],["--muted",4],["--sun",5],["--rose",6],["--h1c",7],["--h2c",8]].forEach(([v,i])=>r.setProperty(v,k[i]));
+  r.setProperty("--pat",PAT[a.pat]||"none");r.setProperty("--r",a.rad+"px");r.setProperty("--hf",`"${a.font}",Georgia,serif`);
+  $("mot").textContent=a.mot;$("sub").textContent=a.id==="all"?"my map of places worth going to":a.n+": "+a.tag;
+  $("vn").textContent=a.n;$("vt").textContent=a.tag;$("vb").textContent=a.vibe;
+  $("vg").innerHTML=a.tags.map(t=>`<span>${esc(t)}</span>`).join("");
+  if(typeof render==="function"&&places.length)render();
+}
+function areaAt(ll){let best=null,bs=9;AREAS.forEach(a=>{const d=map.distance(ll,[a.lat,a.lng])/a.r;if(d<=1&&d<bs){bs=d;best=a}});return best||DEF}
+function goArea(a){setTheme(a);map.flyTo([a.lat,a.lng],a.r>2000?13:14,{duration:1.2})}
+$("areas").innerHTML=AREAS.map(a=>`<button class="chip" style="border-color:${a.k[5]}" data-a="${a.id}">${a.mot} ${esc(a.n)}</button>`).join("");
+$("areas").onclick=e=>{const b=e.target.closest("[data-a]");if(b)goArea(AREAS.find(a=>a.id===b.dataset.a))};
+map.on("moveend",()=>setTheme(map.getZoom()<12?DEF:areaAt(map.getCenter())));
+
+function icon(p){const k=CATS[p.cat]||CATS.other;
+  return L.divIcon({className:"",html:`<div class="pin ${p.done?"done":""}" style="--c:${k.c}"><span>${k.e}</span></div>`,iconSize:[36,36],iconAnchor:[8,38],popupAnchor:[10,-36]})}
+function popup(p){
+  return `<div class="pop"><h4>${esc(p.name)}</h4>${p.note?`<p>${esc(p.note)}</p>`:""}
+  <a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}">Open in Google Maps</a>
+  ${/^https?:\/\//.test(p.src||"")?`<a target="_blank" rel="noopener" href="${esc(p.src)}">Watch the reel</a>`:""}</div>`}
+
+function render(){
+  Object.values(markers).forEach(m=>m.remove());markers={};
+  const shown=places.filter(p=>filter==="all"||p.cat===filter);
+  shown.forEach(p=>{
+    const m=L.marker([p.lat,p.lng],{icon:icon(p),title:p.name}).addTo(map).bindPopup(popup(p));
+    markers[p.id]=m;
+  });
+  $("chips").innerHTML=`<button class="chip ${filter==="all"?"on":""}" data-f="all">All (${places.length})</button>`+
+    Object.entries(CATS).filter(([k])=>places.some(p=>p.cat===k)).map(([k,v])=>
+      `<button class="chip ${filter===k?"on":""}" style="--c:${v.c}" data-f="${k}">${v.e} ${v.n}</button>`).join("");
+  $("list").innerHTML=shown.length?shown.map(p=>{const k=CATS[p.cat]||CATS.other;
+    return `<div class="place ${p.done?"done":""}" data-id="${esc(p.id)}">
+      <div class="ic" style="--c:${k.c}">${k.e}</div>
+      <div><h3>${esc(p.name)}</h3><p style="color:${areaAt([p.lat,p.lng]).k[5]};font-weight:700">${esc(areaAt([p.lat,p.lng]).n)}</p>${p.note?`<p>${esc(p.note)}</p>`:""}
+      <div class="acts"><button data-act="done">${p.done?"Not yet visited":"Mark as visited"}</button><button data-act="del">Remove</button></div></div></div>`}).join("")
+    :`<div class="empty">Nothing here yet.<br>Paste a reel caption above and your first lantern will appear on the map.</div>`;
+}
+$("chips").onclick=e=>{const b=e.target.closest("[data-f]");if(b){filter=b.dataset.f;render()}};
+$("list").onclick=e=>{
+  const row=e.target.closest(".place");if(!row)return;
+  const p=places.find(x=>x.id===row.dataset.id);if(!p)return;
+  const act=e.target.dataset.act;
+  if(act==="del"){places=places.filter(x=>x!==p);save();remote("delete",p);render();toast("Removed “"+p.name+"”");return}
+  if(act==="done"){p.done=!p.done;save();remote("toggle",p);render();return}
+  map.flyTo([p.lat,p.lng],16,{duration:1.1});setTimeout(()=>markers[p.id]&&markers[p.id].openPopup(),1150);
+  if(innerWidth<=820)window.scrollTo(0,0);
+};
+
+/* draft pin */
+function setDraft(lat,lng,name){
+  draft={lat,lng};
+  if(name&&!$("name").value)$("name").value=name;
+  if(draftMarker)draftMarker.setLatLng([lat,lng]);
+  else{draftMarker=L.marker([lat,lng],{draggable:true,icon:L.divIcon({className:"",html:'<div class="draft"></div>',iconSize:[22,22],iconAnchor:[11,11]})}).addTo(map);
+    draftMarker.on("dragend",()=>{const c=draftMarker.getLatLng();setDraft(c.lat,c.lng)})}
+  $("coords").textContent=`Spot chosen (${lat.toFixed(4)}, ${lng.toFixed(4)}). Drag the glowing dot to adjust.`;
+  $("add").open=true;
+}
+function clearDraft(){draft=null;if(draftMarker){draftMarker.remove();draftMarker=null}
+  ["name","note","src","q","paste"].forEach(i=>$(i).value="");$("results").innerHTML="";
+  $("coords").textContent="No spot chosen yet. Search, or use “Drop a pin” on the map."}
+
+$("pinmode").onclick=()=>{pinMode=!pinMode;$("pinmode").classList.toggle("on",pinMode);
+  $("pinmode").textContent=pinMode?"Tap the map…":"📍 Drop a pin";
+  map.getContainer().style.cursor=pinMode?"crosshair":""};
+map.on("click",e=>{if(!pinMode)return;setDraft(e.latlng.lat,e.latlng.lng);$("pinmode").click();toast("Pin dropped. Give it a name.")});
+
+/* search (OpenStreetMap Nominatim, free, no key) */
+async function search(q){
+  if(!q.trim())return;
+  $("results").innerHTML='<p class="hint">Looking…</p>';
+  let url="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q="+encodeURIComponent(q);
+  if(!$("everywhere").checked)url+="&viewbox=77.40,13.18,77.82,12.80&bounded=1";
+  try{
+    const r=await (await fetch(url)).json();
+    if(!r.length){$("results").innerHTML='<p class="hint">Nothing found. Try a shorter name, add the area, or tick “search beyond Bengaluru”. You can also drop a pin by hand.</p>';return}
+    $("results").innerHTML=r.map((x,i)=>`<button data-i="${i}">${esc(x.display_name)}</button>`).join("");
+    $("results").onclick=e=>{const b=e.target.closest("button");if(!b)return;const x=r[b.dataset.i];
+      setDraft(+x.lat,+x.lon,x.name||x.display_name.split(",")[0]);map.flyTo([+x.lat,+x.lon],16,{duration:1});$("results").innerHTML=""};
+  }catch(e){$("results").innerHTML='<p class="hint">Search didn’t go through. Check your connection and try again.</p>'}
+}
+$("search").onclick=()=>search($("q").value);
+$("q").onkeydown=e=>{if(e.key==="Enter")search($("q").value)};
+
+/* paste helper */
+$("find").onclick=()=>{
+  const t=$("paste").value.trim();if(!t){toast("Paste a caption or link first.");return}
+  const ig=t.match(/https?:\/\/(?:www\.)?instagram\.com\/[^\s]+/i);if(ig)$("src").value=ig[0];
+  const g=t.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)||t.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)||t.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(g){setDraft(+g[1],+g[2]);map.flyTo([+g[1],+g[2]],16);toast("Found coordinates in that link.");return}
+  if(/goo\.gl|maps\.app/i.test(t)&&!ig){toast("Short Google links can’t be read. Open it, then copy the long link from the address bar.");return}
+  let line=(t.split(/\n/).find(l=>/[📍🗺]/.test(l))||"").replace(/[📍🗺:]/g,"").trim();
+  if(!line){const at=t.match(/\bat\s+([A-Z][^.,\n!]{2,40})/);line=at?at[1]:t.replace(/https?:\/\/\S+/g,"").split(/\n/)[0].slice(0,70)}
+  if(!line.trim()){toast("No place name found. Type it in the search box.");return}
+  $("q").value=line;search(line);
+};
+$("clear").onclick=clearDraft;
+
+/* save */
+$("save").onclick=()=>{
+  if(!draft){toast("Choose a spot first: search, or drop a pin.");return}
+  const name=$("name").value.trim();if(!name){toast("Give your place a name.");$("name").focus();return}
+  const p={id:"p"+Date.now(),name,cat:$("cat").value,lat:draft.lat,lng:draft.lng,note:$("note").value.trim(),src:$("src").value.trim(),done:false};
+  places.unshift(p);save();remote("add",p);clearDraft();filter="all";render();
+  map.flyTo([p.lat,p.lng],16,{duration:1});setTimeout(()=>markers[p.id]&&markers[p.id].openPopup(),1100);
+  toast("Pinned “"+p.name+"” 📍");
+};
+
+/* backup */
+$("export").onclick=()=>{const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(places,null,2)],{type:"application/json"}));
+  a.download="namma-pins-places.json";a.click();URL.revokeObjectURL(a.href)};
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=async e=>{
+  try{const d=JSON.parse(await e.target.files[0].text());
+    if(!Array.isArray(d))throw 0;
+    const ids=new Set(places.map(p=>p.id));
+    d.filter(p=>p&&typeof p.lat==="number"&&typeof p.lng==="number"&&p.name&&!ids.has(p.id)).forEach(p=>{const q={...p,id:p.id||"p"+Math.random()};places.push(q);remote("add",q)});
+    save();render();toast("Backup added to your map.")}
+  catch(err){toast("That file doesn’t look like a Namma Pins backup.")}
+  e.target.value="";
+};
+
+$("cat").innerHTML=Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v.e} ${v.n}</option>`).join("");
+/* sync with the database when running on Vercel; stays local otherwise */
+let remoteOn=false;
+function pw(){let v="";try{v=localStorage.getItem("namma-pins.pw")||""}catch(e){}
+  if(!v){v=prompt("Your map password (the APP_PASSWORD you set in Vercel):")||"";try{localStorage.setItem("namma-pins.pw",v)}catch(e){}}return v}
+async function remote(action,p){
+  if(!remoteOn)return;
+  try{const r=await fetch("/api/places",{method:"POST",headers:{"content-type":"application/json","x-pw":pw()},body:JSON.stringify({action,place:p})});
+    if(r.status===401){try{localStorage.removeItem("namma-pins.pw")}catch(e){}toast("Wrong password, so that change wasn’t saved online.")}
+    else if(!r.ok)toast("Couldn’t sync that change.")}
+  catch(e){toast("Offline: change kept on this device only.")}}
+async function loadRemote(){
+  try{const r=await fetch("/api/places");if(!r.ok)return;const d=await r.json();
+    if(Array.isArray(d)){places=d;remoteOn=true;save();render()}}catch(e){}}
+load();render();setTheme(DEF);loadRemote();
+</script>
+</body>
+</html>
